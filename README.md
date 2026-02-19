@@ -98,3 +98,5 @@ Notable sections:
 
 - Backend support exists for bookmarks/highlights and related use cases.
 - The current desktop UI is primarily focused on library browsing, reading, search, themes, and admin tooling.
+- Next steps include Unit Testing and introduction of a Minimal API project that will server the DesktopUI and a future Blazor webpage
+  
