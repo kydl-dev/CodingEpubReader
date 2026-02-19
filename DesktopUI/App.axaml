@@ -1,0 +1,45 @@
+<Application
+    RequestedThemeVariant="Default"
+    x:Class="DesktopUI.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:local="using:DesktopUI"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  Theme is loaded from database and set programmatically in App.axaml.cs  -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <SolidColorBrush Color="#FFFFFF" x:Key="AppBackgroundBrush" />
+        <SolidColorBrush Color="#F5F5F5" x:Key="AppSurfaceBrush" />
+        <SolidColorBrush Color="#EFEFEF" x:Key="AppSurfaceAltBrush" />
+        <SolidColorBrush Color="#DDDDDD" x:Key="AppBorderBrush" />
+        <SolidColorBrush Color="#1A1A1A" x:Key="AppTextBrush" />
+        <SolidColorBrush Color="#444444" x:Key="AppTextMutedBrush" />
+        <SolidColorBrush Color="#6A6A6A" x:Key="AppTextLowBrush" />
+        <SolidColorBrush Color="#E6E6E6" x:Key="AppButtonBackgroundBrush" />
+        <SolidColorBrush Color="#1A1A1A" x:Key="AppButtonForegroundBrush" />
+        <SolidColorBrush Color="#FAFAFA" x:Key="AppCardBackgroundBrush" />
+        <SolidColorBrush Color="#D4D4D4" x:Key="AppCardBorderBrush" />
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!--  Custom style overrides for better readability  -->
+        <Style Selector="TopLevel">
+            <Setter Property="Background" Value="{DynamicResource AppBackgroundBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Background" Value="{DynamicResource AppButtonBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource AppButtonForegroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+        </Style>
+    </Application.Styles>
+</Application>

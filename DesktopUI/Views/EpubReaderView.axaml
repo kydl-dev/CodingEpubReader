@@ -1,0 +1,338 @@
+﻿<UserControl
+    d:DesignHeight="600"
+    d:DesignWidth="1000"
+    mc:Ignorable="d"
+    x:Class="DesktopUI.Views.EpubReaderView"
+    x:DataType="vm:EpubReaderViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:awv="clr-namespace:AvaloniaWebView;assembly=Avalonia.WebView"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DesktopUI.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.DataContext>
+        <vm:EpubReaderViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Border
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="0,0,0,1"
+            Grid.Row="0"
+            Padding="15,10">
+            <Grid RowDefinitions="Auto,Auto">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto,Auto" Grid.Row="0">
+                    <Button
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowLibraryCommand}"
+                        Content="&lt; Library"
+                        FontSize="14"
+                        Grid.Column="0"
+                        Margin="0,0,10,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Back to Library" />
+
+                    <Button
+                        Command="{Binding ToggleTocCommand}"
+                        Content="TOC"
+                        FontSize="14"
+                        Grid.Column="1"
+                        Margin="0,0,10,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Toggle Table of Contents" />
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Text="{Binding BookTitle}" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{DynamicResource AppTextMutedBrush}"
+                            IsVisible="{Binding CurrentChapter, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Margin="0,2,0,0"
+                            Text="{Binding CurrentChapter.Title}" />
+                    </StackPanel>
+
+                    <Button
+                        Command="{Binding ToggleSearchCommand}"
+                        Content="Search"
+                        FontSize="14"
+                        Grid.Column="3"
+                        Margin="0,0,5,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Toggle Search" />
+
+                    <Button
+                        Command="{Binding CopyChapterTextCommand}"
+                        Content="Copy"
+                        FontSize="14"
+                        Grid.Column="4"
+                        Margin="0,0,5,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Copy Chapter Text" />
+
+                    <Button
+                        Command="{Binding ExportBookCommand}"
+                        Content="Export"
+                        FontSize="14"
+                        Grid.Column="5"
+                        Margin="0,0,5,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Export Complete Book" />
+
+                    <Button
+                        Command="{Binding ToggleThemePanelCommand}"
+                        Content="Themes"
+                        FontSize="14"
+                        Grid.Column="6"
+                        Margin="0,0,5,0"
+                        Padding="10,5"
+                        ToolTip.Tip="Change App Theme or Reader Style" />
+
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="{DynamicResource AppTextLowBrush}"
+                        Grid.Column="7"
+                        IsVisible="{Binding IsLoading}"
+                        Text="Loading..."
+                        VerticalAlignment="Center" />
+                </Grid>
+
+                <StackPanel
+                    Grid.Row="1"
+                    Margin="0,10,0,0"
+                    Spacing="8">
+                    <Border
+                        Background="{DynamicResource AppSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        IsVisible="{Binding IsSearchVisible}"
+                        Padding="10">
+                        <Grid ColumnDefinitions="*" RowDefinitions="Auto,Auto,Auto,*">
+                            <StackPanel
+                                Grid.Row="0"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <TextBox
+                                    Text="{Binding SearchQuery}"
+                                    Watermark="Search in book..."
+                                    Width="360" />
+                                <Button Command="{Binding SearchInBookCommand}" Content="Find" />
+                                <CheckBox Content="Case sensitive" IsChecked="{Binding SearchCaseSensitive}" />
+                                <CheckBox Content="Whole word" IsChecked="{Binding SearchWholeWord}" />
+                                <TextBlock
+                                    Foreground="{DynamicResource AppTextMutedBrush}"
+                                    IsVisible="{Binding IsSearchBusy}"
+                                    Text="Searching..."
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <ListBox
+                                Grid.Row="1"
+                                IsVisible="{Binding SearchSuggestions.Count}"
+                                ItemsSource="{Binding SearchSuggestions}"
+                                Margin="0,8,0,0"
+                                MaxHeight="120">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource AppTextMutedBrush}"
+                                Grid.Row="2"
+                                Margin="0,6,0,0"
+                                Text="{Binding SearchResults.Count, StringFormat='Results: {0}'}" />
+
+                            <ListBox
+                                Grid.Row="3"
+                                IsVisible="{Binding SearchResults.Count}"
+                                ItemsSource="{Binding SearchResults}"
+                                Margin="0,8,0,0"
+                                MaxHeight="260">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="vm:SearchResultItemViewModel">
+                                        <Border
+                                            BorderBrush="{DynamicResource AppBorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="6">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock FontWeight="Bold" Text="{Binding ChapterTitle}" />
+                                                    <TextBlock
+                                                        Foreground="{DynamicResource AppTextMutedBrush}"
+                                                        Text="{Binding Preview}"
+                                                        TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <Button
+                                                    Command="{Binding $parent[UserControl].((vm:EpubReaderViewModel)DataContext).OpenSearchResultCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="Go"
+                                                    Grid.Column="1"
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        Background="{DynamicResource AppSurfaceAltBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        IsVisible="{Binding IsThemePanelVisible}"
+                        Padding="10">
+                        <Grid ColumnDefinitions="Auto,220,Auto,220,*" RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock
+                                Grid.Column="0"
+                                Grid.Row="0"
+                                Margin="0,0,10,0"
+                                Text="App Theme"
+                                VerticalAlignment="Center" />
+                            <ComboBox
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                ItemsSource="{Binding AppThemeOptions}"
+                                SelectedItem="{Binding SelectedAppTheme}"
+                                Width="210" />
+
+                            <TextBlock
+                                Grid.Column="2"
+                                Grid.Row="0"
+                                Margin="20,0,10,0"
+                                Text="Reader Style"
+                                VerticalAlignment="Center" />
+                            <ComboBox
+                                Grid.Column="3"
+                                Grid.Row="0"
+                                ItemsSource="{Binding ReaderStyleOptions}"
+                                SelectedItem="{Binding SelectedReaderStyle}"
+                                Width="210" />
+
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource AppTextMutedBrush}"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="5"
+                                Grid.Row="1"
+                                Margin="0,8,0,0"
+                                Text="App Theme changes UI chrome. Reader Style changes EPUB text rendering." />
+
+                            <Button
+                                Command="{Binding SyncCodeDefaultsToDbCommand}"
+                                Content="Sync Code Defaults to DB"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Grid.Row="2"
+                                IsVisible="{Binding IsDebugToolsVisible}"
+                                Margin="0,10,0,0"
+                                Padding="10,5"
+                                ToolTip.Tip="Debug only: overwrite persisted theme/style defaults from code presets." />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="Auto,*" Grid.Row="1">
+            <Border
+                Background="{DynamicResource AppSurfaceBrush}"
+                BorderBrush="{DynamicResource AppBorderBrush}"
+                BorderThickness="0,0,1,0"
+                Grid.Column="0"
+                IsVisible="{Binding IsTocVisible}"
+                Width="340">
+                <Grid Margin="10" RowDefinitions="Auto,*">
+                    <TextBlock
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Grid.Row="0"
+                        Margin="10,10,10,15"
+                        Text="Table of Contents" />
+                    <ScrollViewer
+                        Grid.Row="1"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Auto"
+                        x:Name="TocScrollViewer">
+                        <TreeView
+                            HorizontalAlignment="Left"
+                            ItemsSource="{Binding TableOfContents}"
+                            x:Name="TocTreeView">
+                            <TreeView.ItemTemplate>
+                                <TreeDataTemplate DataType="vm:TocNodeViewModel" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Vertical">
+                                        <Button
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Command="{Binding $parent[UserControl].((vm:EpubReaderViewModel)DataContext).NavigateToChapterCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Left"
+                                            HorizontalContentAlignment="Left"
+                                            IsEnabled="{Binding HasContent}"
+                                            Margin="0,1"
+                                            MinWidth="320"
+                                            Padding="6,6">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock
+                                                    FontSize="13"
+                                                    FontWeight="{Binding TitleWeight}"
+                                                    Margin="{Binding AdditionalIndent}"
+                                                    Text="{Binding Title}"
+                                                    TextTrimming="None"
+                                                    TextWrapping="Wrap"
+                                                    ToolTip.Tip="{Binding Title}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <TextBlock
+                                            FontSize="11"
+                                            Foreground="{DynamicResource AppTextMutedBrush}"
+                                            IsVisible="{Binding IsSectionHeader}"
+                                            Margin="6,0,0,4"
+                                            Text="Section header" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Padding="8">
+                <awv:WebView x:Name="ChapterWebView" />
+            </Border>
+        </Grid>
+
+        <Border
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="0,1,0,0"
+            Grid.Row="2"
+            Padding="15,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock
+                    FontSize="12"
+                    Grid.Column="0"
+                    Text="{Binding StatusMessage}"
+                    VerticalAlignment="Center" />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{DynamicResource AppTextMutedBrush}"
+                    Grid.Column="1"
+                    VerticalAlignment="Center">
+                    <Run Text="Chapters: " />
+                    <Run Text="{Binding ChapterCount}" />
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

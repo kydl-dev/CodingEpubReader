@@ -1,0 +1,98 @@
+<Window
+    Height="600"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="{Binding Greeting}"
+    Width="900"
+    d:DesignHeight="600"
+    d:DesignWidth="900"
+    mc:Ignorable="d"
+    x:Class="DesktopUI.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="using:DesktopUI.Views"
+    xmlns:vm="using:DesktopUI.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*">
+        <Border
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="0,0,0,1"
+            Grid.Row="0"
+            Padding="10,8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button
+                    Command="{Binding ToggleMenuCommand}"
+                    Content="☰"
+                    FontSize="18"
+                    Padding="10,2" />
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    Text="Epub Reader"
+                    VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <ContentControl Content="{Binding CurrentView}">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="vm:BookLibraryViewModel">
+                        <views:BookLibraryView />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:AdminPanelViewModel">
+                        <views:AdminPanelView />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:EpubReaderViewModel">
+                        <views:EpubReaderView />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:ThemeSettingsViewModel">
+                        <views:ThemeSettingsView />
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+
+            <Border Background="#80000000" IsVisible="{Binding IsMenuOpen}">
+                <Grid ColumnDefinitions="260,*">
+                    <Border
+                        Background="{DynamicResource AppSurfaceBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="0,0,1,0"
+                        Padding="12">
+                        <StackPanel Spacing="8">
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Margin="0,0,0,8"
+                                Text="Menu" />
+                            <Button Command="{Binding ShowLibraryCommand}" Content="Library" />
+                            <Button Command="{Binding ShowRecentlyReadCommand}" Content="Recently Read" />
+                            <Button Command="{Binding ShowAdminCommand}" Content="Admin" />
+                            <Button Command="{Binding ShowThemesCommand}" Content="Themes" />
+                            <TextBlock
+                                Foreground="{DynamicResource AppTextMutedBrush}"
+                                Margin="0,10,0,0"
+                                Text="More sections can be added here."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding ToggleMenuCommand}"
+                        Grid.Column="1" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+
+</Window>

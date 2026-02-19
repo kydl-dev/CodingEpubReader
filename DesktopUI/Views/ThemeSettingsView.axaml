@@ -1,0 +1,40 @@
+<UserControl
+    mc:Ignorable="d"
+    x:Class="DesktopUI.Views.ThemeSettingsView"
+    x:DataType="vm:ThemeSettingsViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DesktopUI.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.DataContext>
+        <vm:ThemeSettingsViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,*">
+        <TextBlock
+            FontSize="24"
+            FontWeight="Bold"
+            Text="Themes" />
+
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,14,0,0"
+            Orientation="Horizontal"
+            Spacing="10">
+            <ComboBox
+                ItemsSource="{Binding ThemeOptions}"
+                SelectedItem="{Binding SelectedTheme}"
+                Width="220" />
+            <Button Command="{Binding ApplyThemeCommand}" Content="Apply Theme" />
+        </StackPanel>
+
+        <TextBlock
+            Foreground="{DynamicResource AppTextMutedBrush}"
+            Grid.Row="2"
+            Margin="0,14,0,0"
+            Text="Use the side menu to return to Library, Recently Read, or Admin."
+            TextWrapping="Wrap" />
+    </Grid>
+</UserControl>

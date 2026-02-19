@@ -1,0 +1,319 @@
+<UserControl
+    d:DesignHeight="640"
+    d:DesignWidth="1050"
+    mc:Ignorable="d"
+    x:Class="DesktopUI.Views.AdminPanelView"
+    x:DataType="vm:AdminPanelViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DesktopUI.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="16" RowDefinitions="Auto,*,Auto">
+        <Border
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Grid.Row="0"
+            Padding="12">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button
+                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowLibraryCommand}"
+                    Content="&lt; Library"
+                    Grid.Column="0" />
+                <TextBlock
+                    Foreground="{DynamicResource AppTextMutedBrush}"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    IsVisible="{Binding IsBusy}"
+                    Text="Working..."
+                    VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="0,10,0,0">
+            <TabItem Header="Cache">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,Auto,*,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RefreshCacheStatsCommand}" Content="Refresh" />
+                        <Button Command="{Binding ClearCacheCommand}" Content="Clear Cache" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Total Items: " />
+                            <Run FontWeight="Bold" Text="{Binding TotalCachedItems}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{DynamicResource AppTextMutedBrush}"
+                        Grid.Row="1"
+                        Text="Shows in-memory ICacheService keys for the current process." />
+                    <Border
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Grid.Row="2"
+                        Padding="8">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock FontWeight="Bold" Text="Keys by Prefix" />
+                            <ListBox
+                                Grid.Row="1"
+                                ItemsSource="{Binding CacheKeyPrefixCounts}"
+                                Margin="0,8,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="{Binding Prefix}" />
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Grid.Column="1"
+                                                Text="{Binding Count}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                    <Border
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Grid.Row="3"
+                        Padding="8">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock FontWeight="Bold" Text="All Keys" />
+                            <ListBox
+                                Grid.Row="1"
+                                ItemsSource="{Binding AllCacheKeys}"
+                                Margin="0,8,0,0" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Library Scan">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,Auto,Auto,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RunLibraryScanNowCommand}" Content="Run Now" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Last Run (UTC): " />
+                            <Run Text="{Binding LastLibraryScanRunAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1">
+                        <Run Text="Enabled: " /><Run Text="{Binding LibraryScanEnabled}" /><Run Text=" | Interval: " />
+                        <Run Text="{Binding LibraryScanInterval}" /><Run Text=" | Startup: " />
+                        <Run Text="{Binding LibraryScanOnStartup}" />
+                    </TextBlock>
+                    <TextBlock
+                        FontWeight="Bold"
+                        Grid.Row="2"
+                        Text="Watched Folders" />
+                    <ListBox Grid.Row="3" ItemsSource="{Binding WatchedFolders}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="DB Maintenance">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,Auto,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RunDatabaseMaintenanceNowCommand}" Content="Run Now" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Last Run (UTC): " />
+                            <Run Text="{Binding LastDatabaseMaintenanceRunAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1">
+                        <Run Text="Enabled: " /><Run Text="{Binding MaintenanceEnabled}" /><Run Text=" | Interval: " />
+                        <Run Text="{Binding MaintenanceInterval}" />
+                    </TextBlock>
+                    <StackPanel Grid.Row="2" Spacing="4">
+                        <TextBlock>
+                            <Run Text="Vacuum: " /><Run Text="{Binding VacuumEnabled}" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Orphan Cleanup: " /><Run Text="{Binding OrphanCleanupEnabled}" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Compression: " /><Run Text="{Binding CompressionEnabled}" /><Run Text=" (" />
+                            <Run Text="{Binding CompressionAgeDays}" /><Run Text=" days)" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Stats Update: " /><Run Text="{Binding StatisticsUpdateEnabled}" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Temp Cleanup: " /><Run Text="{Binding TempCleanupEnabled}" /><Run Text=" (" />
+                            <Run Text="{Binding TempCleanupAgeDays}" /><Run Text=" days)" />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Cover Cache">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,Auto,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RunCoverCacheNowCommand}" Content="Run Now" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Last Run (UTC): " />
+                            <Run Text="{Binding LastCoverCacheRunAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1">
+                        <Run Text="Enabled: " /><Run Text="{Binding CoverCacheEnabled}" /><Run Text=" | Interval: " />
+                        <Run Text="{Binding CoverCacheInterval}" /><Run Text=" | Startup: " />
+                        <Run Text="{Binding CoverCacheOnStartup}" />
+                    </TextBlock>
+                    <StackPanel Grid.Row="2" Spacing="4">
+                        <TextBlock>
+                            <Run Text="Cleanup Enabled: " /><Run Text="{Binding CoverCacheCleanupEnabled}" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Cache Max Age: " /><Run Text="{Binding CoverCacheMaxAgeDays}" />
+                            <Run Text=" days" />
+                        </TextBlock>
+                        <TextBlock>
+                            <Run Text="Thumbnail Sizes: " /><Run Text="{Binding ThumbnailSizesCount}" />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Logging Stats">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,Auto,Auto,*,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RunLoggingStatsNowCommand}" Content="Run Now" />
+                        <Button Command="{Binding RefreshLogStatsCommand}" Content="Refresh Snapshot" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Last Run (UTC): " />
+                            <Run Text="{Binding LastLoggingStatsRunAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1">
+                        <Run Text="Enabled: " /><Run Text="{Binding LoggingStatsEnabled}" />
+                        <Run Text=" | Interval: " /><Run Text="{Binding LoggingStatsInterval}" />
+                        <Run Text=" | Retention: " /><Run Text="{Binding LoggingStatsRetentionDays}" />
+                        <Run Text=" days" />
+                    </TextBlock>
+                    <TextBlock Grid.Row="2">
+                        <Run Text="Files: " /><Run FontWeight="Bold" Text="{Binding LogProcessedFiles}" />
+                        <Run Text=" | Errors: " /><Run FontWeight="Bold" Text="{Binding LogTotalErrors}" />
+                        <Run Text=" | Warnings: " /><Run FontWeight="Bold" Text="{Binding LogTotalWarnings}" />
+                        <Run Text=" | Info: " /><Run FontWeight="Bold" Text="{Binding LogTotalInformation}" />
+                    </TextBlock>
+                    <Border
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Grid.Row="3"
+                        Padding="8">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock FontWeight="Bold" Text="Top Errors" />
+                            <ListBox
+                                Grid.Row="1"
+                                ItemsSource="{Binding TopErrors}"
+                                Margin="0,8,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock FontWeight="Bold" Text="{Binding ErrorType}" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Margin="8,0"
+                                                Text="{Binding Message}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Count}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                    <Border
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Grid.Row="4"
+                        Padding="8">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock FontWeight="Bold" Text="Recent Hourly Series" />
+                            <ListBox
+                                Grid.Row="1"
+                                ItemsSource="{Binding TimeSeries}"
+                                Margin="0,8,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding Timestamp, StringFormat='{}{0:MM-dd HH:mm}'}" />
+                                            <Run Text=" E:" /><Run Text="{Binding ErrorCount}" />
+                                            <Run Text=" W:" /><Run Text="{Binding WarningCount}" />
+                                            <Run Text=" I:" /><Run Text="{Binding InfoCount}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Reading Sessions">
+                <Grid
+                    Margin="10"
+                    RowDefinitions="Auto,*"
+                    RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding RunReadingSessionNowCommand}" Content="Run Now" />
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Last Run (UTC): " />
+                            <Run Text="{Binding LastReadingSessionRunAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" />
+                        </TextBlock>
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Active: " />
+                            <Run FontWeight="Bold" Text="{Binding ActiveReadingSessions.Count}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding ActiveReadingSessions}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="2*,2*,Auto,Auto" ColumnSpacing="8">
+                                    <TextBlock Text="{Binding BookId}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{Binding CurrentChapterId}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" Text="{Binding CurrentPosition}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Duration}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Border
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Grid.Row="2"
+            Margin="0,10,0,0"
+            Padding="10">
+            <TextBlock Text="{Binding StatusMessage}" />
+        </Border>
+    </Grid>
+</UserControl>
