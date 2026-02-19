@@ -622,7 +622,6 @@ public partial class EpubReaderView : ReactiveUserControl<EpubReaderViewModel>
                          }
 
                          var lowerNeedle = needle.toLowerCase();
-                         var textOffset = 0;
                          var walker = document.createTreeWalker(
                            document.body || document.documentElement,
                            NodeFilter.SHOW_TEXT,
@@ -637,53 +636,102 @@ public partial class EpubReaderView : ReactiveUserControl<EpubReaderViewModel>
                              }
                            });
 
-                         var candidates = [];
+                         var segments = [];
+                         var combinedParts = [];
+                         var textOffset = 0;
                          var n;
                          while ((n = walker.nextNode())) {
                            var nodeText = n.nodeValue || "";
-                           var lower = nodeText.toLowerCase();
-                           var from = 0;
-                           while (true) {
-                             var idx = lower.indexOf(lowerNeedle, from);
-                             if (idx < 0) break;
-                             candidates.push({ node: n, localIndex: idx, globalIndex: textOffset + idx });
-                             from = idx + 1;
-                           }
+                           if (!nodeText) continue;
+                           segments.push({ node: n, start: textOffset, end: textOffset + nodeText.length });
+                           combinedParts.push(nodeText);
                            textOffset += nodeText.length;
                          }
 
-                         if (candidates.length === 0) return "not-found";
+                         if (segments.length === 0 || textOffset === 0) return "not-found";
+
+                         var fullText = combinedParts.join("");
+                         var fullLower = fullText.toLowerCase();
+                         var matches = [];
+                         var from = 0;
+                         while (true) {
+                           var idx = fullLower.indexOf(lowerNeedle, from);
+                           if (idx < 0) break;
+                           matches.push(idx);
+                           from = idx + 1;
+                         }
+
+                         if (matches.length === 0) return "not-found";
 
                          var best = null;
-                         for (var j = 0; j < candidates.length; j++) {
-                           var c = candidates[j];
-                           if (c.globalIndex >= expectedPos) {
-                             best = c;
+                         for (var j = 0; j < matches.length; j++) {
+                           var candidatePos = matches[j];
+                           if (candidatePos >= expectedPos) {
+                             best = candidatePos;
                              break;
                            }
                          }
 
                          if (!best) {
                            var closestDiff = Number.MAX_SAFE_INTEGER;
-                           for (var k = 0; k < candidates.length; k++) {
-                             var current = candidates[k];
-                             var diff = Math.abs(current.globalIndex - expectedPos);
+                           for (var k = 0; k < matches.length; k++) {
+                             var currentPos = matches[k];
+                             var diff = Math.abs(currentPos - expectedPos);
                              if (diff < closestDiff) {
                                closestDiff = diff;
-                               best = current;
+                               best = currentPos;
                              }
                            }
                          }
 
-                         if (!best || !best.node) return "not-found";
+                         if (best === null || best < 0) return "not-found";
+
+                         function locatePosition(globalIndex, preferEnd) {
+                           if (globalIndex <= 0)
+                             return { node: segments[0].node, offset: 0 };
+
+                           if (globalIndex >= textOffset) {
+                             var tail = segments[segments.length - 1];
+                             return { node: tail.node, offset: (tail.node.nodeValue || "").length };
+                           }
+
+                           for (var s = 0; s < segments.length; s++) {
+                             var segment = segments[s];
+                             if (globalIndex < segment.end) {
+                               return { node: segment.node, offset: Math.max(0, globalIndex - segment.start) };
+                             }
+
+                             if (globalIndex === segment.end) {
+                               if (!preferEnd && s + 1 < segments.length)
+                                 return { node: segments[s + 1].node, offset: 0 };
+
+                               return { node: segment.node, offset: (segment.node.nodeValue || "").length };
+                             }
+                           }
+
+                           return null;
+                         }
+
+                         var endIndex = Math.min(best + needle.length, textOffset);
+                         if (endIndex <= best) return "not-found";
+
+                         var startPos = locatePosition(best, false);
+                         var endPos = locatePosition(endIndex, true);
+                         if (!startPos || !endPos) return "not-found";
 
                          var range = document.createRange();
-                         range.setStart(best.node, best.localIndex);
-                         range.setEnd(best.node, best.localIndex + needle.length);
+                         range.setStart(startPos.node, startPos.offset);
+                         range.setEnd(endPos.node, endPos.offset);
 
                          var mark = document.createElement("mark");
                          mark.className = "epub-search-hit";
-                         range.surroundContents(mark);
+                         try {
+                           range.surroundContents(mark);
+                         } catch (_) {
+                           var extracted = range.extractContents();
+                           mark.appendChild(extracted);
+                           range.insertNode(mark);
+                         }
                          mark.scrollIntoView({ behavior: "auto", block: "center", inline: "nearest" });
                          return "ok";
                        })();

@@ -146,7 +146,11 @@ public class Book
         var value = chapterId.Trim();
 
         var fragmentIndex = value.IndexOf('#');
-        if (fragmentIndex >= 0) value = value[..fragmentIndex];
+        var queryIndex = value.IndexOf('?');
+        var splitIndex = fragmentIndex >= 0 && queryIndex >= 0
+            ? Math.Min(fragmentIndex, queryIndex)
+            : Math.Max(fragmentIndex, queryIndex);
+        if (splitIndex >= 0) value = value[..splitIndex];
 
         value = value.Replace('\\', '/');
 

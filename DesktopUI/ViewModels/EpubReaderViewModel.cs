@@ -483,18 +483,10 @@ public class EpubReaderViewModel : ViewModelBase, IActivatableViewModel
                 return;
             }
 
+            var chapterReference = NormalizeChapterReference(chapter.ContentSrc);
             IsLoading = true;
             StatusMessage = $"Loading chapter: {chapter.Title}...";
             CurrentChapter = chapter;
-
-            // Step 1 — NavigateToChapterCommand: validates the chapter exists on the Book
-            // aggregate and persists the new reading position to the DB.
-            await _mediator.Send(new NavigateToChapterCommand(BookId, chapter.ContentSrc.Trim()));
-
-            // Step 2 — GetChapterContentQuery: returns the fully styled HTML for the WebView
-            // (applies the active CSS reader style via IBookContentService).
-            var contentQuery = new GetChapterContentQuery(BookId, chapter.ContentSrc.Trim(), _activeReaderStyleId);
-            CurrentChapterContent = await _mediator.Send(contentQuery);
 
             if (!_hasAppliedPreferredProgress &&
                 !string.IsNullOrWhiteSpace(_preferredInitialChapterId) &&
@@ -508,8 +500,17 @@ public class EpubReaderViewModel : ViewModelBase, IActivatableViewModel
                 CurrentChapterProgress = 0.0;
             }
 
+            // Step 1 — NavigateToChapterCommand: validates the chapter exists on the Book
+            // aggregate and persists the new reading position to the DB.
+            await _mediator.Send(new NavigateToChapterCommand(BookId, chapterReference));
+
+            // Step 2 — GetChapterContentQuery: returns the fully styled HTML for the WebView
+            // (applies the active CSS reader style via IBookContentService).
+            var contentQuery = new GetChapterContentQuery(BookId, chapterReference, _activeReaderStyleId);
+            CurrentChapterContent = await _mediator.Send(contentQuery);
+
             StatusMessage = $"Reading: {chapter.Title}";
-            Log.Information("Navigated to chapter {ChapterId} for book {BookId}", chapter.ContentSrc, BookId);
+            Log.Information("Navigated to chapter {ChapterId} for book {BookId}", chapterReference, BookId);
         }
         catch (Exception ex)
         {
@@ -581,21 +582,46 @@ public class EpubReaderViewModel : ViewModelBase, IActivatableViewModel
         return false;
     }
 
+    private static string NormalizeChapterReference(string value, bool keepFragment = true)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var normalized = value.Trim().Replace('\\', '/');
+        var hashIndex = normalized.IndexOf('#');
+        var queryIndex = normalized.IndexOf('?');
+
+        if (queryIndex >= 0)
+        {
+            if (hashIndex >= 0 && queryIndex < hashIndex)
+            {
+                var fragment = normalized[hashIndex..];
+                normalized = normalized[..queryIndex] + fragment;
+            }
+            else
+            {
+                normalized = normalized[..queryIndex];
+            }
+        }
+
+        if (!keepFragment)
+        {
+            hashIndex = normalized.IndexOf('#');
+            if (hashIndex >= 0) normalized = normalized[..hashIndex];
+        }
+
+        normalized = normalized.TrimStart('/');
+        if (normalized.StartsWith("./", StringComparison.Ordinal)) normalized = normalized[2..];
+
+        return WebUtility.UrlDecode(normalized);
+    }
+
     private static bool ChapterIdsEquivalent(string first, string second)
     {
         static string Normalize(string value)
         {
             if (string.IsNullOrWhiteSpace(value)) return string.Empty;
 
-            var trimmed = value.Trim();
-            var hashIndex = trimmed.IndexOf('#');
-            if (hashIndex >= 0) trimmed = trimmed[..hashIndex];
-
-            trimmed = trimmed.Replace('\\', '/');
-            trimmed = trimmed.TrimStart('/');
-            if (trimmed.StartsWith("./", StringComparison.Ordinal)) trimmed = trimmed[2..];
-
-            return WebUtility.UrlDecode(trimmed);
+            return NormalizeChapterReference(value, false);
         }
 
         var left = Normalize(first);
@@ -640,7 +666,7 @@ public class EpubReaderViewModel : ViewModelBase, IActivatableViewModel
         var clampedProgress = Math.Clamp(progress, 0.0, 1.0);
         CurrentChapterProgress = clampedProgress;
 
-        var chapterId = CurrentChapter.ContentSrc.Trim();
+        var chapterId = NormalizeChapterReference(CurrentChapter.ContentSrc);
         var chapterChanged = !string.Equals(_lastPersistedChapterId, chapterId, StringComparison.OrdinalIgnoreCase);
         var delta = Math.Abs(clampedProgress - _lastPersistedProgress);
 
@@ -869,7 +895,7 @@ public class EpubReaderViewModel : ViewModelBase, IActivatableViewModel
     {
         if (CurrentChapter == null || !CurrentChapter.HasContent) return;
 
-        var chapterId = CurrentChapter.ContentSrc.Trim();
+        var chapterId = NormalizeChapterReference(CurrentChapter.ContentSrc);
         var contentQuery = new GetChapterContentQuery(BookId, chapterId, _activeReaderStyleId);
         CurrentChapterContent = await _mediator.Send(contentQuery);
     }

@@ -5,7 +5,6 @@
     x:Class="DesktopUI.Views.BookLibraryView"
     x:DataType="vm:BookLibraryViewModel"
     xmlns="https://github.com/avaloniaui"
-    xmlns:awv="clr-namespace:AvaloniaWebView;assembly=Avalonia.WebView"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:DesktopUI.ViewModels"
@@ -273,7 +272,7 @@
                     BorderThickness="1"
                     CornerRadius="10"
                     HorizontalAlignment="Center"
-                    MaxHeight="520"
+                    MaxHeight="640"
                     Padding="16"
                     VerticalAlignment="Center"
                     Width="680">
@@ -308,9 +307,16 @@
                                     BorderBrush="{DynamicResource AppBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="6"
-                                    Height="200"
+                                    Height="260"
                                     Padding="2">
-                                    <awv:WebView x:Name="DetailsDescriptionWebView" />
+                                    <TextBox
+                                        AcceptsReturn="True"
+                                        Background="{DynamicResource AppSurfaceAltBrush}"
+                                        BorderThickness="0"
+                                        IsReadOnly="True"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                        Text="{Binding SelectedBookDetails.Description}"
+                                        TextWrapping="Wrap" />
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>

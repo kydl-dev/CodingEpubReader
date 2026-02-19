@@ -103,13 +103,22 @@ public class SearchService
         if (string.IsNullOrWhiteSpace(html))
             return string.Empty;
 
-        // Remove HTML tags but preserve text content
+        // Remove script/style blocks first.
         var text = Regex.Replace(html, @"<script[^>]*>[\s\S]*?</script>", " ", RegexOptions.IgnoreCase);
         text = Regex.Replace(text, @"<style[^>]*>[\s\S]*?</style>", " ", RegexOptions.IgnoreCase);
-        text = Regex.Replace(text, "<[^>]+>", " ");
+
+        // Keep separation between structural blocks while preserving inline token adjacency
+        // (e.g. syntax-highlighted code split across many <code> tags).
+        text = Regex.Replace(
+            text,
+            @"<(br|/p|/div|/li|/tr|/td|/th|/h[1-6]|/pre|/blockquote|/section|/article|/ul|/ol)\b[^>]*>",
+            " ",
+            RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, "<[^>]+>", string.Empty);
 
         // Decode common HTML entities
         text = WebUtility.HtmlDecode(text);
+        text = text.Replace('\u00A0', ' ');
 
         // Normalize whitespace
         text = Regex.Replace(text, @"\s+", " ");

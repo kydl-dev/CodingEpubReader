@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Reactive.Disposables.Fluent;
 using System.Threading.Tasks;
 using Application.Interfaces;
@@ -408,9 +409,7 @@ public class BookLibraryViewModel : ViewModelBase, IActivatableViewModel
             EpubVersion = string.IsNullOrWhiteSpace(details.Metadata.EpubVersion)
                 ? "Unknown"
                 : details.Metadata.EpubVersion,
-            Description = string.IsNullOrWhiteSpace(details.Metadata.Description)
-                ? "No description available."
-                : details.Metadata.Description,
+            Description = BuildPlainTextDescription(details.Metadata.Description),
             DescriptionHtmlDocument = BuildHtmlDocument(details.Metadata.Description)
         };
 
@@ -461,14 +460,46 @@ public class BookLibraryViewModel : ViewModelBase, IActivatableViewModel
                    <head>
                      <meta charset="utf-8" />
                      <style>
-                       body { font-family: Segoe UI, Arial, sans-serif; font-size: 14px; line-height: 1.5; margin: 0; padding: 6px; color: #d7dbe6; background: transparent; }
-                       a { color: #7ab8ff; }
-                       p { margin: 0 0 8px 0; }
+                       body {
+                         font-family: Segoe UI, Arial, sans-serif;
+                         font-size: 14px;
+                         line-height: 1.5;
+                         margin: 0;
+                         padding: 6px;
+                       }
+
+                       .description-root img {
+                         max-width: 100%;
+                         height: auto;
+                       }
+
+                       .description-root p {
+                         margin: 0 0 10px 0;
+                       }
                      </style>
                    </head>
-                   <body>{{body}}</body>
+                   <body><div class="description-root">{{body}}</div></body>
                  </html>
                  """;
+    }
+
+    private static string BuildPlainTextDescription(string? rawHtml)
+    {
+        if (string.IsNullOrWhiteSpace(rawHtml))
+            return "No description available.";
+
+        var text = rawHtml;
+        text = Regex.Replace(text, @"<(br|/p|/div|/li|/h[1-6]|/ul|/ol)\b[^>]*>", "\n",
+            RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, "<[^>]+>", string.Empty);
+        text = WebUtility.HtmlDecode(text);
+        text = text.Replace('\u00A0', ' ');
+        text = Regex.Replace(text, @"\n{3,}", "\n\n");
+        text = Regex.Replace(text, @"[ \t]+\n", "\n");
+        text = Regex.Replace(text, @"[ \t]{2,}", " ");
+
+        var normalized = text.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? "No description available." : normalized;
     }
 
     private static Bitmap? BuildCoverPreviewImage(string bookFilePath, string? coverImagePath)
